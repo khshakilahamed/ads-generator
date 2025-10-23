@@ -10,7 +10,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ImagePlus, Monitor, Smartphone, Sparkles, Square } from "lucide-react";
+import {
+  ImagePlus,
+  Loader2Icon,
+  Monitor,
+  Smartphone,
+  Sparkles,
+  Square,
+} from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
 
@@ -22,7 +29,13 @@ const sampleProduct = [
   "/ice-creame.png",
 ];
 
-const FormInput = () => {
+type Props = {
+  onHandleInputChange: any;
+  OnGenerate: any;
+  loading: boolean;
+};
+
+const FormInput = ({ onHandleInputChange, OnGenerate, loading }: Props) => {
   const [preview, setPreview] = useState<string | null>();
 
   const onFileSelect = (files: FileList | null) => {
@@ -37,6 +50,7 @@ const FormInput = () => {
 
     console.log("file: ", file);
 
+    onHandleInputChange("file", file);
     setPreview(URL.createObjectURL(file));
   };
 
@@ -88,7 +102,10 @@ const FormInput = () => {
                 height={60}
                 key={index}
                 className="w-[60px] h-[60px] rounded-lg cursor-pointer hover:scale-105 transition-all"
-                onClick={() => setPreview(product)}
+                onClick={() => {
+                  setPreview(product);
+                  onHandleInputChange("imageUrl", product);
+                }}
               />
             ))}
           </div>
@@ -99,12 +116,13 @@ const FormInput = () => {
         <Textarea
           placeholder="Tell me more about product and how you want to display."
           className="min-h-[150px] mt-2"
+          onChange={(e) => onHandleInputChange("description", e.target.value)}
         />
       </div>
       <div className="mt-8">
         <h2 className="font-semibold">3. Select image size</h2>
 
-        <Select>
+        <Select onValueChange={(value) => onHandleInputChange("size", value)}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select Resolution" />
           </SelectTrigger>
@@ -131,8 +149,14 @@ const FormInput = () => {
         </Select>
       </div>
 
-      <Button className="mt-10 w-full"> <Sparkles/> Generate</Button>
-      <h2 className="mt-1 text-xs opacity-35 text-center"> 5 Credit to Generate</h2>
+      <Button className="mt-10 w-full" onClick={OnGenerate} disabled={loading}>
+        {loading ? <Loader2Icon className="animate-spin" /> : <Sparkles />}{" "}
+        Generate
+      </Button>
+      <h2 className="mt-1 text-xs opacity-35 text-center">
+        {" "}
+        5 Credit to Generate
+      </h2>
     </div>
   );
 };
