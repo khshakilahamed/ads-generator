@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 const AiTools = [
@@ -7,7 +8,7 @@ const AiTools = [
     name: "AI Products Image",
     desc: "Generate high-quality, professional product images instantly with AI",
     bannerImage: "/product-image.png",
-    path: "/",
+    path: "/creative-ai-tools/product-images",
   },
   {
     name: "AI Products Video",
@@ -37,7 +38,9 @@ const AiToolList = () => {
             <div>
               <h2 className="font-bold text-2xl">{tool?.name}</h2>
               <p className="opacity-60 mt-2">{tool?.desc}</p>
-              <Button className="mt-4">Create Now</Button>
+              <Link href={tool?.path}>
+                <Button className="mt-4">Create Now</Button>
+              </Link>
             </div>
             <Image
               src={tool?.bannerImage}
