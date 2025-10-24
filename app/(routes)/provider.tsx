@@ -18,7 +18,7 @@ function DashboardProvider({
   useEffect(() => {
     if (!user?.user && user.user) return router.replace("/login");
 
-    user?.user && checkUser();
+    // user?.user && checkUser();
   }, [user]);
 
   const checkUser = async () => {
