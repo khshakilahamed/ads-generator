@@ -53,8 +53,13 @@ export async function POST(req: NextRequest) {
 
             // update credit
             const userRef = collection(db, 'users');
-            const q = query(userRef, where('userEmail', '==', userEmail));
+            const q = query(userRef, where('email', '==', userEmail));
             const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                  throw new Error(`User with email ${userEmail} not found`);
+            }
+
             const userDoc = querySnapshot.docs[0];
             const userInfo = userDoc.data();
 
@@ -68,7 +73,7 @@ export async function POST(req: NextRequest) {
                   size: size,
             });
 
-            // --- 1️⃣ Upload original product image to ImageKit ---
+            // --- Upload original product image to ImageKit ---
             const arrayBuffer = await file.arrayBuffer();
             const base64File = Buffer.from(arrayBuffer).toString("base64");
 
@@ -80,20 +85,6 @@ export async function POST(req: NextRequest) {
 
             console.log("🖼 Uploaded Product Image:", imageKitRef.url);
 
-
-            // Update Doc
-            await updateDoc(doc(db, 'user-ads', docId), {
-                  finalProductImageUrl: imageKitRef?.url,
-                  productImageUrl: imageKitRef.url,
-                  status: 'completed',
-                  userInfo: userInfo?.credits - 5,
-            })
-
-
-            return NextResponse.json(imageKitRef.url);
-
-
-            /* 
             // --- 2️⃣ Generate prompt JSON using Gemini ---
             const promptContents = [
                   { role: "user", parts: [{ text: PROMPT }] },
@@ -115,6 +106,22 @@ export async function POST(req: NextRequest) {
 
             console.log("Parsed JSON:", json);
 
+
+            // Update Doc
+            await updateDoc(doc(db, 'user-ads', docId), {
+                  finalProductImageUrl: imageKitRef?.url,
+                  productImageUrl: imageKitRef.url,
+                  status: 'completed',
+                  userInfo: userInfo?.credits - 5,
+                  imageToVideoPrompt: json?.imageToVideo, // save Image to video prompt
+            })
+
+
+            return NextResponse.json(imageKitRef.url);
+
+
+            /* 
+            
             // --- 4️⃣ Generate final image using Gemini image model ---
             const imageContents = [
                   { role: "user", parts: [{ text: json.textToImage }] },

@@ -1,7 +1,7 @@
 import { db } from "@/configs/firebaseConfig";
 import { imagekit } from "@/lib/imagekit";
 import { clientOpenAi } from "@/lib/openai";
-import { doc, setDoc } from "firebase/firestore";
+import { collection, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { NextRequest, NextResponse } from "next/server";
 
 const PROMPT = `Create a vibrant product showcase image featuring a upload image in the center, surrounded by dynamic splashes of liquid or relevant material that complement the product. Use a clean, colorful background to make the product stand out. Include  subtle element related to product's flavour ingredient, or theme floating around to add context and visual interest. 
@@ -15,6 +15,22 @@ export async function POST(req: NextRequest) {
       const description = formData?.get('description');
       const size = formData?.get('size');
       const userEmail = formData?.get('userEmail');
+
+      // update credit
+      const userRef = collection(db, 'users');
+      const q = query(userRef, where('userEmail', '==', userEmail));
+      const querySnapshot = await getDocs(q);
+      const userDoc = querySnapshot.docs[0];
+      const userInfo = userDoc.data();
+
+      // Save to Database
+      const docId = Date.now().toString();
+      await setDoc(doc(db, 'user-ads', docId), {
+            userEmail: userEmail,
+            status: 'pending',
+            description: description,
+            size: size,
+      });
 
       // Upload Product Image
       const arrayBuffer = await file.arrayBuffer();
@@ -91,13 +107,12 @@ export async function POST(req: NextRequest) {
             isPublished: true,
       });
 
-      // Save to Database
-      await setDoc(doc(db, 'user-ads', Date.now().toString()), {
-            userEmail: userEmail,
-            finalProductImageUrl: uploadResult?.url,
+      // Update Doc
+      await updateDoc(doc(db, 'user-ads', docId), {
+            finalProductImageUrl: imageKitRef?.url,
             productImageUrl: imageKitRef.url,
-            description: description,
-            size: size,
+            status: 'completed',
+            userInfo: userInfo?.credits - 5,
       })
 
 

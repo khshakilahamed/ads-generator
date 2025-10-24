@@ -13,7 +13,7 @@ type FormData = {
   imageUrl?: string;
 };
 
-const ProductImages = () => {
+const ProductImages = ({ title }: { title?: string }) => {
   const [formData, setFormData] = useState<FormData>();
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useAuthContext();
@@ -44,7 +44,10 @@ const ProductImages = () => {
 
     // Make API Call
     // const result = await axios.post("/api/generate-product-image", formData_);
-    const result = await axios.post("/api/generate-product-image-gemini", formData_);
+    const result = await axios.post(
+      "/api/generate-product-image-gemini",
+      formData_
+    );
 
     console.log(result.data);
 
@@ -54,7 +57,9 @@ const ProductImages = () => {
 
   return (
     <div>
-      <h2 className="font-bold text-2xl mb-3">AI Product Image Generator</h2>
+      <h2 className="font-bold text-2xl mb-3">
+        {title ?? "AI Product Image Generator"}
+      </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
         <div>
           <FormInput
