@@ -1,22 +1,37 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import FormInput from "../_components/FormInput";
 import PreviewResult from "../_components/PreviewResult";
 import axios from "axios";
 import { useAuthContext } from "@/app/provider";
+import { useRouter } from "next/navigation";
 
 type FormData = {
   file: File | undefined;
   description: string;
   size: string;
   imageUrl?: string;
+  avatar?: string;
 };
 
-const ProductImages = ({ title }: { title?: string }) => {
+const ProductImages = ({
+  title,
+  enableAvatar = false,
+}: {
+  title?: string;
+  enableAvatar: boolean;
+}) => {
   const [formData, setFormData] = useState<FormData>();
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useAuthContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user]);
 
   const onHandleInputChange = (field: string, value: string) => {
     setFormData((prev: any) => ({
@@ -41,6 +56,10 @@ const ProductImages = ({ title }: { title?: string }) => {
     formData_.append("description", formData.description ?? "");
     formData_.append("size", formData.size ?? "1024x1024");
     formData_.append("userEmail", user?.email ?? "");
+
+    if (formData?.avatar) {
+      formData_.append("avatar", formData?.avatar);
+    }
 
     // Make API Call
     // const result = await axios.post("/api/generate-product-image", formData_);
@@ -68,6 +87,7 @@ const ProductImages = ({ title }: { title?: string }) => {
             }
             OnGenerate={OnGenerate}
             loading={loading}
+            enableAvatar={enableAvatar}
           />
         </div>
         <div className="md:col-span-2">

@@ -4,22 +4,41 @@ import { imagekit } from "@/lib/imagekit";
 import { GeminiAi } from "@/lib/geminiai"; // Your Gemini client
 import { collection, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
 
 const PROMPT = `
-Create a vibrant product showcase image featuring an uploaded image in the center,
-surrounded by dynamic splashes of liquid or relevant materials that complement the product.
-Use a clean, colorful background to make the product stand out.
-Include subtle elements related to the product’s flavor, ingredients, or theme
-floating around to add context and visual interest.
-Ensure the product is sharp and in focus, conveying motion and energy.
+      Create a vibrant product showcase image featuring an uploaded image in the center,
+      surrounded by dynamic splashes of liquid or relevant materials that complement the product.
+      Use a clean, colorful background to make the product stand out.
+      Include subtle elements related to the product’s flavor, ingredients, or theme
+      floating around to add context and visual interest.
+      Ensure the product is sharp and in focus, conveying motion and energy.
 
-Then, provide me a JSON object with two fields:
-{
-  "textToImage": "A refined text prompt to generate the image.",
-  "imageToVideo": "A detailed text prompt to create a short video animation from that image."
-}
+      Then, provide me a JSON object with two fields:
+      {
+      "textToImage": "A refined text prompt to generate the image.",
+      "imageToVideo": "A detailed text prompt to create a short video animation from that image."
+      }
 
-⚠️ Output only valid JSON, no explanations, no markdown, no extra text.
+      ⚠️ Output only valid JSON, no explanations, no markdown, no extra text.
+`;
+
+const AvatarPrompt = `
+      Create a vibrant product shhwcase image featuring the uploaded product image being held naturally
+      by the uploaded avatar image. Position the product clearly in the avatar's hands, making it the focal
+      point of the scene. Surround the product with dynamic splashes of liquid or relevant materials that
+      complement the product. Use a clean, colorful background to make the product stand out. Add
+      subtle floating elements related to the product's flavor, ingredients, or theme for extra context and
+      visual interest. Ensure both the avatar and product are sharp, well-lit, and in focus, while motion and
+      energy are conveyed through the splash effects.
+      
+      Then, provide me a JSON object with two fields:
+      {
+      "textToImage": "A refined text prompt to generate the image.",
+      "imageToVideo": "A detailed text prompt to create a short video animation from that image."
+      }
+
+      ⚠️ Output only valid JSON, no explanations, no markdown, no extra text.
 `;
 
 // --- Retry helper for Gemini overload errors ---
@@ -50,6 +69,7 @@ export async function POST(req: NextRequest) {
             const description = formData.get("description");
             const size = formData.get("size");
             const userEmail = formData?.get('userEmail');
+            const avatar = formData?.get('avatar');
 
             // update credit
             const userRef = collection(db, 'users');
@@ -85,10 +105,19 @@ export async function POST(req: NextRequest) {
 
             console.log("🖼 Uploaded Product Image:", imageKitRef.url);
 
+            let avatarBase64 = null;
+
+            if (avatar) {
+                  const response = await axios.get(avatar as string, { responseType: "arraybuffer" });
+                  const base64 = Buffer.from(response.data, "binary").toString("base64");
+                  avatarBase64 = base64;
+            }
+
             // --- 2️⃣ Generate prompt JSON using Gemini ---
             const promptContents = [
-                  { role: "user", parts: [{ text: PROMPT }] },
+                  { role: "user", parts: [{ text: avatar ? AvatarPrompt : PROMPT }] },
                   { role: "user", parts: [{ inlineData: { mimeType: "image/png", data: base64File } }] },
+                  
             ];
 
             const promptResponse = await generateWithRetry("gemini-2.0-flash", promptContents);
@@ -126,6 +155,9 @@ export async function POST(req: NextRequest) {
             const imageContents = [
                   { role: "user", parts: [{ text: json.textToImage }] },
                   { role: "user", parts: [{ inlineData: { mimeType: "image/png", data: base64File } }] },
+                   ...(avatar && avatarBase64
+                        ? [{ role: "user", parts: [{ inlineData: { mimeType: "image/png", data: avatarBase64 } }] }]
+                        : []),
             ];
             const imageResponse = await generateWithRetry("gemini-2.5-flash-image-preview", imageContents);
             const imagePart = imageResponse.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);

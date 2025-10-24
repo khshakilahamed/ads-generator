@@ -1,11 +1,38 @@
 "use client";
 
+import { useAuthContext } from "@/app/provider";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { PreviewProduct } from "../../creative-ai-tools/_components/PreviewResult";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/configs/firebaseConfig";
+import { Play } from "lucide-react";
+import Link from "next/link";
 
 const UsersAdsList = () => {
-  const [adsList, setAdsList] = useState([]);
+  const [adsList, setAdsList] = useState<PreviewProduct[]>([]);
+  const { user } = useAuthContext();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const q = query(
+      collection(db, "user-ads"),
+      where("userEmail", "==", user.email)
+    );
+
+    const unSub = onSnapshot(q, (querySnapshot) => {
+      const matchedDocs: any[] = [];
+      querySnapshot.forEach((doc) => {
+        matchedDocs.push({ id: doc.id, ...doc.data() });
+      });
+      setAdsList(matchedDocs);
+    });
+
+    return () => unSub();
+  }, [user?.email]);
 
   return (
     <div>
@@ -21,9 +48,40 @@ const UsersAdsList = () => {
             className="w-20"
           />
           <h2 className="text-xl">You don't have any ads created.</h2>
-          <Button>Create New Ads</Button>
+          <Link href={user ? "/creative-ai-tools/product-images" : "/login"}>
+            <Button>Create New Ads</Button>
+          </Link>
         </div>
       )}
+
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+        {adsList?.map((ads, index) => (
+          <div>
+            <Image
+              src={ads?.finalProductImageUrl}
+              alt={ads?.finalProductImageUrl}
+              width={400}
+              height={400}
+              className="w-full h-[250px] lg:h-[370px] object-cover"
+            />
+            <div className="flex items-center mt-2 justify-between">
+              <Link href={ads?.finalProductImageUrl} target="_blank">
+                <Button className="" variant={"outline"}>
+                  View
+                </Button>
+              </Link>
+
+              {ads?.videoUrl && (
+                <Link href={ads?.videoUrl} target="_blank">
+                  <Button>
+                    <Play />
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

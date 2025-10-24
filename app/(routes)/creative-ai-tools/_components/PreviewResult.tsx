@@ -16,7 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
-type PreviewProduct = {
+export type PreviewProduct = {
   id: string;
   userEmail: string;
   description: string;

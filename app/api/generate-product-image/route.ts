@@ -8,6 +8,17 @@ const PROMPT = `Create a vibrant product showcase image featuring a upload image
 Ensure the product is sharp and in focus, with motion and energy conveyed through the splash effect.
 Also give me image to video prompt for same in JSON format: {textToImage: ",imageToVideo:"}`;
 
+const AvatarPrompt = `
+      Create a vibrant product shhwcase image featuring the uploaded product image being held naturally
+      by the uploaded avatar image. Position the product clearly in the avatar's hands, making it the focal
+      point of the scene. Surround the product with dynamic splashes of liquid or relevant materials that
+      complement the product. Use a clean, colorful background to make the product stand out. Add
+      subtle floating elements related to the product's flavor, ingredients, or theme for extra context and
+      visual interest. Ensure both the avatar and product are sharp, well-lit, and in focus, while motion and
+      energy are conveyed through the splash effects.Also give me image to video prompt for same in
+      JSON format: (textTolmage:",image ToVideo:"]
+`;
+
 export async function POST(req: NextRequest) {
       const formData = await req.formData();
 
@@ -15,6 +26,7 @@ export async function POST(req: NextRequest) {
       const description = formData?.get('description');
       const size = formData?.get('size');
       const userEmail = formData?.get('userEmail');
+      const avatar = formData?.get('avatar');
 
       // update credit
       const userRef = collection(db, 'users');
@@ -55,7 +67,7 @@ export async function POST(req: NextRequest) {
                         content: [
                               {
                                     type: 'input_text',
-                                    text: PROMPT
+                                    text: avatar ? AvatarPrompt : PROMPT
                               },
                               {
                                     type: 'input_image',
@@ -71,27 +83,39 @@ export async function POST(req: NextRequest) {
       const textOutput = response.output_text?.trim();
       let json = JSON.parse(textOutput);
 
+
+      const avatarInput = avatar
+            ? [
+                  {
+                        type: "input_image" as const,
+                        image_url: String(avatar), // ✅ make sure it's a string
+                        detail: "auto" as const,
+                  },
+            ]
+            : [];
+
       // Generate Image Product
       const ImageResponse = await clientOpenAi.responses.create({
-            model: 'gpt-4.1-mini',
+            model: "gpt-4.1-mini",
             max_output_tokens: 500,
             input: [
                   {
-                        role: 'user',
+                        role: "user",
                         content: [
                               {
-                                    type: 'input_text',
-                                    text: json?.textToImage
+                                    type: "input_text",
+                                    text: json?.textToImage || "Generate an image based on this description",
                               },
                               {
-                                    type: 'input_image',
+                                    type: "input_image",
                                     image_url: imageKitRef.url,
-                                    detail: 'auto',
-                              }
-                        ]
-                  }
+                                    detail: 'auto' as const,
+                              },
+                              ...avatarInput
+                        ],
+                  },
             ],
-            tools: [{ type: 'image_generation' }]
+            tools: [{ type: "image_generation" }],
       });
 
       console.log("ImageResponse: ", ImageResponse);

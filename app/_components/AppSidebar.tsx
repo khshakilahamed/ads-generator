@@ -40,7 +40,7 @@ const items = [
   },
   {
     title: "My Ads",
-    url: "#",
+    url: "/my-ads",
     icon: Megaphone,
   },
   {

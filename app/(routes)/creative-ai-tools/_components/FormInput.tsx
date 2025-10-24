@@ -29,14 +29,29 @@ const sampleProduct = [
   "/ice-creame.png",
 ];
 
+const AvatarList = [
+  {
+    name: "Avatar 1",
+    imageUrl:
+      "https://ik.imagekit.io/chsftnes1/Avatar/portrait-pic2.avif?updatedAt=1761301950097",
+  },
+];
+
 type Props = {
   onHandleInputChange: any;
   OnGenerate: any;
   loading: boolean;
+  enableAvatar: boolean;
 };
 
-const FormInput = ({ onHandleInputChange, OnGenerate, loading }: Props) => {
+const FormInput = ({
+  onHandleInputChange,
+  OnGenerate,
+  loading,
+  enableAvatar,
+}: Props) => {
   const [preview, setPreview] = useState<string | null>();
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>();
 
   const onFileSelect = (files: FileList | null) => {
     if (!files || files?.length === 0) return;
@@ -89,28 +104,56 @@ const FormInput = ({ onHandleInputChange, OnGenerate, loading }: Props) => {
           />
         </div>
         {/* Sample products */}
-        <div>
-          <h2 className="opacity-40 text-center mt-3">
-            Select Sample Product to try
-          </h2>
-          <div className="flex gap-5 items-center">
-            {sampleProduct.map((product, index) => (
+        {!enableAvatar && (
+          <div>
+            <h2 className="opacity-40 text-center mt-3">
+              Select Sample Product to try
+            </h2>
+            <div className="flex gap-5 items-center">
+              {sampleProduct.map((product, index) => (
+                <Image
+                  src={product}
+                  alt={product}
+                  width={100}
+                  height={60}
+                  key={index}
+                  className="w-[60px] h-[60px] rounded-lg cursor-pointer hover:scale-105 transition-all"
+                  onClick={() => {
+                    setPreview(product);
+                    onHandleInputChange("imageUrl", product);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {enableAvatar && (
+        <div className="mt-8">
+          <h2 className="font-semibold">Select Avatar</h2>
+
+          <div className="grid grid-cols-4 mt-2">
+            {AvatarList?.map((avatar, index) => (
               <Image
-                src={product}
-                alt={product}
-                width={100}
-                height={60}
                 key={index}
-                className="w-[60px] h-[60px] rounded-lg cursor-pointer hover:scale-105 transition-all"
+                src={avatar?.imageUrl}
+                alt={avatar?.name}
+                width={200}
+                height={200}
+                className={`rounded-lg h-[100px] w-[80px] cursor-pointer object-cover ${
+                  avatar?.name === selectedAvatar && "border-2 border-primary"
+                }`}
                 onClick={() => {
-                  setPreview(product);
-                  onHandleInputChange("imageUrl", product);
+                  setSelectedAvatar(avatar?.name);
+                  onHandleInputChange("avatar", avatar.imageUrl);
                 }}
               />
             ))}
           </div>
         </div>
-      </div>
+      )}
+
       <div className="mt-8">
         <h2 className="font-semibold">2. Enter product description</h2>
         <Textarea
@@ -119,6 +162,7 @@ const FormInput = ({ onHandleInputChange, OnGenerate, loading }: Props) => {
           onChange={(e) => onHandleInputChange("description", e.target.value)}
         />
       </div>
+
       <div className="mt-8">
         <h2 className="font-semibold">3. Select image size</h2>
 
