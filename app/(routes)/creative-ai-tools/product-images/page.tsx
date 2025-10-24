@@ -20,7 +20,7 @@ const ProductImages = ({
   enableAvatar = false,
 }: {
   title?: string;
-  enableAvatar: boolean;
+  enableAvatar?: boolean;
 }) => {
   const [formData, setFormData] = useState<FormData>();
   const [loading, setLoading] = useState<boolean>(false);
