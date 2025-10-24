@@ -53,7 +53,7 @@ async function generateWithRetry(
 // --- Generate edited image using Replicate Inpainting ---
 async function editImageWithReplicate(prompt: string, imageUrl: string, maskUrl?: string) {
   try {
-    const output: string[] = await replicate.run(
+    const output: any = await replicate.run(
       "stability-ai/stable-diffusion-inpainting",
       {
         input: {
